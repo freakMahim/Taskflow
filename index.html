@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b0c12" />
+  <title>TaskFlow — Make today count</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+    :root {
+      --bg: #0b0c12; --panel: #12141d; --panel2: #171a25; --line: #252938;
+      --text: #f4f5fb; --muted: #8b91a7; --purple: #a78bfa; --purple2: #8b5cf6;
+      --green: #6ee7b7; --red: #fb7185; --yellow: #fcd34d;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 50% -15%, #272044 0%, var(--bg) 48%); color: var(--text); font-family: 'DM Sans', sans-serif; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1080px, calc(100% - 36px)); margin: 0 auto; padding: 30px 0 50px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:42px; }
+    .brand { display:flex; align-items:center; gap:12px; font-family:'Space Grotesk',sans-serif; font-size:21px; font-weight:700; letter-spacing:-.6px; }
+    .logo { display:grid; place-items:center; width:38px; height:38px; border-radius:12px; background:linear-gradient(140deg,#c4b5fd,#7c3aed); color:#171124; box-shadow:0 6px 24px #8b5cf633; }
+    .logo svg { width:21px; }
+    .date-pill { color:var(--muted); border:1px solid var(--line); background:#11131bcc; border-radius:999px; padding:9px 13px; font-size:12px; }
+    .eyebrow { color:var(--purple); font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+    h1 { font:600 clamp(32px,5vw,48px)/1.1 'Space Grotesk',sans-serif; letter-spacing:-1.9px; margin:0; }
+    h1 span { color:var(--purple); }
+    .intro { color:var(--muted); margin:13px 0 28px; line-height:1.6; font-size:14px; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+    .stat { background:linear-gradient(145deg,#171a26,#11131b); border:1px solid var(--line); border-radius:18px; padding:19px 20px; position:relative; overflow:hidden; }
+    .stat:after { content:''; position:absolute; width:80px;height:80px;border-radius:50%;right:-24px;top:-30px;background:#a78bfa0b; }
+    .stat-top { display:flex; align-items:center; justify-content:space-between; color:var(--muted); font-size:12px; }
+    .stat-icon { display:grid;place-items:center;width:29px;height:29px;border-radius:9px;background:#a78bfa16;color:var(--purple);font-size:15px; }
+    .stat-number { font:600 29px 'Space Grotesk',sans-serif; margin-top:13px; }
+    .stat-note { font-size:11px; color:var(--muted); margin-top:3px; }
+    .workspace { display:grid; grid-template-columns: minmax(0,1.6fr) minmax(250px,.8fr); gap:18px; align-items:start; }
+    .panel { background:#11131bd9; border:1px solid var(--line); border-radius:20px; overflow:hidden; }
+    .panel-head { padding:21px 22px 17px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .panel-title { font:600 17px 'Space Grotesk',sans-serif; }
+    .subtext { color:var(--muted); font-size:12px; margin-top:5px; }
+    .count { border:1px solid #39304f; color:#c4b5fd; background:#a78bfa12; border-radius:9px; padding:5px 9px; font-size:11px; }
+    .add-form { display:flex; gap:9px; padding:0 22px 18px; }
+    .task-input { min-width:0; flex:1; border:1px solid #303448; border-radius:11px; background:#0c0e15; color:var(--text); padding:12px 13px; outline:none; transition:.2s; }
+    .task-input:focus, .small-input:focus, select:focus { border-color:var(--purple2); box-shadow:0 0 0 3px #8b5cf622; }
+    .task-input::placeholder { color:#656b80; }
+    .add-btn { border:0; border-radius:11px; padding:0 16px; background:var(--purple); color:#1a132b; font-weight:700; transition:transform .15s,background .15s; white-space:nowrap; }
+    .add-btn:hover { background:#c4b5fd; transform:translateY(-1px); }
+    .filters { display:flex; gap:6px; padding:0 22px 15px; border-bottom:1px solid var(--line); }
+    .filter { border:1px solid transparent; border-radius:9px; background:transparent; color:var(--muted); padding:7px 11px; font-size:12px; }
+    .filter.active { color:#e8ddff; border-color:#3b3154; background:#a78bfa16; }
+    .task-list { padding:5px 12px 12px; }
+    .task { display:flex; align-items:center; gap:12px; padding:14px 10px; border-bottom:1px solid #222533; animation:appear .2s ease; }
+    .task:last-child { border-bottom:0; }
+    @keyframes appear { from {opacity:0;transform:translateY(4px)} to {opacity:1;transform:translateY(0)} }
+    .check { flex:0 0 20px; width:20px;height:20px;border:1.5px solid #4a5065;border-radius:7px;background:transparent;display:grid;place-items:center;color:#11131b;padding:0; }
+    .task.done .check { background:var(--green); border-color:var(--green); }
+    .check svg { width:13px; height:13px; }
+    .task-main { flex:1; min-width:0; }
+    .task-title { font-size:13px; overflow-wrap:anywhere; line-height:1.5; }
+    .task.done .task-title { color:#777e91; text-decoration:line-through; }
+    .task-meta { display:flex; align-items:center; gap:7px; margin-top:6px; }
+    .tag { font-size:10px; padding:4px 7px; border-radius:6px; background:#202332; color:#a8aec3; }
+    .tag.urgent { background:#fb718515; color:#fda4af; }
+    .task-date { font-size:10px; color:#6f758a; }
+    .task-actions { display:flex; gap:4px; opacity:.65; }
+    .icon-btn { width:29px;height:29px;display:grid;place-items:center;border:1px solid transparent;border-radius:8px;background:transparent;color:#9399ad;padding:0; }
+    .icon-btn:hover { background:#242838;color:var(--text);border-color:#303548; }
+    .icon-btn.delete:hover { color:var(--red); }
+    .icon-btn svg { width:14px;height:14px; }
+    .empty { text-align:center; padding:42px 15px 46px; color:var(--muted); }
+    .empty-mark { display:grid;place-items:center;margin:0 auto 13px;width:48px;height:48px;border-radius:15px;background:#a78bfa13;color:var(--purple);font-size:22px; }
+    .empty strong { display:block;color:#dfe1ed;font-size:13px;margin-bottom:6px; }
+    .empty p { font-size:12px;margin:0; }
+    .side { padding:22px; }
+    .side h2 { font:600 16px 'Space Grotesk',sans-serif;margin:0; }
+    .side .subtext { margin-bottom:20px; }
+    .progress-wrap { background:#242738;height:7px;border-radius:99px;overflow:hidden;margin:13px 0 9px; }
+    .progress-bar { height:100%;width:0;background:linear-gradient(90deg,#8b5cf6,#c4b5fd);border-radius:99px;transition:width .3s; }
+    .progress-label { display:flex;justify-content:space-between;font-size:11px;color:var(--muted); }
+    .side-divider { border:0;border-top:1px solid var(--line);margin:22px 0; }
+    .field-label { display:block;color:#b2b7c8;font-size:11px;font-weight:600;margin-bottom:8px; }
+    select, .small-input { width:100%;border:1px solid #303448;border-radius:10px;background:#0c0e15;color:var(--text);padding:10px 11px;outline:none;font-size:12px; }
+    .field { margin-bottom:15px; }
+    .helper { font-size:11px;line-height:1.6;color:#747b91;margin-top:12px; }
+    .clear-btn { width:100%;border:1px solid #39303a;background:#fb71850b;color:#fda4af;border-radius:10px;padding:10px;font-size:12px;font-weight:600; }
+    .clear-btn:hover { background:#fb71851b; }
+    .toast { position:fixed;left:50%;bottom:24px;transform:translate(-50%,15px);background:#222638;border:1px solid #3b4158;color:#f4f5fb;padding:11px 16px;border-radius:12px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;box-shadow:0 12px 35px #0005; }
+    .toast.show { opacity:1;transform:translate(-50%,0); }
+    footer { display:flex;justify-content:space-between;gap:12px;margin-top:25px;color:#62687b;font-size:11px; }
+    footer span:last-child { color:#8b91a7; }
+    @media (max-width:760px) { .workspace {grid-template-columns:1fr}.stats{gap:9px}.stat{padding:15px}.stat-number{font-size:25px}.stat-top{font-size:11px}.side{padding:20px}header{margin-bottom:34px} }
+    @media (max-width:480px) { .shell{width:calc(100% - 24px);padding-top:20px}.date-pill{font-size:10px;padding:8px}.brand{font-size:18px}.logo{width:34px;height:34px}.stats{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:span 2}.add-form{padding:0 14px 15px}.panel-head{padding:18px 15px 15px}.filters{padding:0 14px 13px}.task-list{padding:4px 8px 8px}.task{gap:9px}.task-actions{opacity:1}.filter{padding:7px 9px}.intro{font-size:13px}footer{flex-direction:column} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12 4.2 4.2L19 6.8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        TaskFlow
+      </div>
+      <div class="date-pill" id="todayLabel">YOUR DAILY WORKSPACE</div>
+    </header>
+
+    <section>
+      <div class="eyebrow">YOUR SPACE TO GET THINGS DONE</div>
+      <h1>Make today <span>count.</span></h1>
+      <p class="intro">One step at a time. Keep your focus, build your momentum, and make progress happen.</p>
+    </section>
+
+    <section class="stats" aria-label="Task statistics">
+      <article class="stat"><div class="stat-top"><span>Total tasks</span><span class="stat-icon">◫</span></div><div class="stat-number" id="totalCount">0</div><div class="stat-note">Everything on your plate</div></article>
+      <article class="stat"><div class="stat-top"><span>Completed</span><span class="stat-icon" style="color:var(--green);background:#6ee7b715">✓</span></div><div class="stat-number" id="completedCount">0</div><div class="stat-note">Little wins add up</div></article>
+      <article class="stat"><div class="stat-top"><span>Still to do</span><span class="stat-icon" style="color:var(--yellow);background:#fcd34d15">◷</span></div><div class="stat-number" id="pendingCount">0</div><div class="stat-note">You've got this</div></article>
+    </section>
+
+    <section class="workspace">
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">My tasks</div><div class="subtext">Capture it. Complete it. Move forward.</div></div><span class="count" id="listCount">0 tasks</span></div>
+        <form class="add-form" id="taskForm">
+          <input class="task-input" id="taskInput" maxlength="120" placeholder="What needs to get done?" aria-label="New task" required />
+          <button class="add-btn" type="submit">＋ Add task</button>
+        </form>
+        <nav class="filters" aria-label="Filter tasks">
+          <button class="filter active" data-filter="all" type="button">All tasks</button>
+          <button class="filter" data-filter="active" type="button">In progress</button>
+          <button class="filter" data-filter="completed" type="button">Completed</button>
+        </nav>
+        <div class="task-list" id="taskList"></div>
+      </div>
+
+      <aside class="panel side">
+        <h2>Your progress</h2>
+        <div class="subtext">Every completed task is a win.</div>
+        <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="progress-label"><span id="progressCaption">Let's get started</span><strong id="progressPercent" style="color:#c4b5fd">0%</strong></div>
+        <hr class="side-divider" />
+        <div class="field"><label class="field-label" for="prioritySelect">DEFAULT PRIORITY</label><select id="prioritySelect"><option value="Normal">Normal</option><option value="High">High priority</option><option value="Low">Low priority</option></select></div>
+        <div class="field"><label class="field-label" for="categorySelect">DEFAULT CATEGORY</label><select id="categorySelect"><option>Personal</option><option>Work</option><option>Study</option><option>Health</option><option>Other</option></select></div>
+        <p class="helper">Your tasks are saved in this browser automatically. No account needed. ✦</p>
+        <hr class="side-divider" />
+        <button class="clear-btn" id="clearCompleted" type="button">Clear completed tasks</button>
+      </aside>
+    </section>
+
+    <footer><span>© <span id="year"></span> TaskFlow. Built to help you focus.</span><span>Small steps. Big progress. ✦</span></footer>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = 'taskflow-tasks-v1';
+    let tasks = loadTasks();
+    let currentFilter = 'all';
+    let editingId = null;
+    let toastTimer;
+
+    const $ = (selector) => document.querySelector(selector);
+    const taskList = $('#taskList');
+    const escapeHTML = (value) => String(value).replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+
+    function loadTasks() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        return Array.isArray(saved) ? saved.filter(task => task && typeof task.title === 'string') : [];
+      } catch { return []; }
+    }
+    function saveTasks() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+      catch { showToast('Could not save in this browser.'); }
+    }
+    function makeId() {
+      return window.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+    function showToast(message) {
+      const toast = $('#toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2300);
+    }
+    function dateLabel(dateString) {
+      if (!dateString) return 'Added recently';
+      return new Date(dateString).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+    function render() {
+      const completed = tasks.filter(task => task.completed).length;
+      const pending = tasks.length - completed;
+      const percent = tasks.length ? Math.round(completed / tasks.length * 100) : 0;
+      $('#totalCount').textContent = tasks.length;
+      $('#completedCount').textContent = completed;
+      $('#pendingCount').textContent = pending;
+      $('#listCount').textContent = `${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`;
+      $('#progressBar').style.width = `${percent}%`;
+      $('#progressPercent').textContent = `${percent}%`;
+      $('#progressCaption').textContent = tasks.length ? (percent === 100 ? 'All done — amazing!' : `${completed} of ${tasks.length} completed`) : "Let's get started";
+
+      const visible = tasks.filter(task => currentFilter === 'all' || (currentFilter === 'active' && !task.completed) || (currentFilter === 'completed' && task.completed));
+      if (!visible.length) {
+        const emptyTitle = currentFilter === 'completed' ? 'No completed tasks yet' : currentFilter === 'active' ? 'You’re all caught up' : 'A fresh start';
+        const emptyText = currentFilter === 'completed' ? 'Finish a task and it will show up here.' : currentFilter === 'active' ? 'Nothing pending. Enjoy the breathing room.' : 'Add your first task above and make it happen.';
+        taskList.innerHTML = `<div class="empty"><div class="empty-mark">✦</div><strong>${emptyTitle}</strong><p>${emptyText}</p></div>`;
+        return;
+      }
+      taskList.innerHTML = visible.map(task => {
+        const checkIcon = '<svg viewBox="0 0 20 20" fill="none"><path d="m4 10 4 4 8-8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const priorityClass = task.priority === 'High' ? 'urgent' : '';
+        return `<article class="task ${task.completed ? 'done' : ''}" data-id="${escapeHTML(task.id)}">
+          <button class="check" data-action="toggle" aria-label="${task.completed ? 'Mark as incomplete' : 'Mark as complete'}">${task.completed ? checkIcon : ''}</button>
+          <div class="task-main"><div class="task-title">${escapeHTML(task.title)}</div><div class="task-meta"><span class="tag ${priorityClass}">${escapeHTML(task.priority || 'Normal')}</span><span class="tag">${escapeHTML(task.category || 'Personal')}</span><span class="task-date">${dateLabel(task.createdAt)}</span></div></div>
+          <div class="task-actions"><button class="icon-btn" data-action="edit" aria-label="Edit task" title="Edit"><svg viewBox="0 0 24 24" fill="none"><path d="m14 5 5 5M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="icon-btn delete" data-action="delete" aria-label="Delete task" title="Delete"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+        </article>`;
+      }).join('');
+    }
+
+    $('#taskForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const input = $('#taskInput');
+      const title = input.value.trim();
+      if (!title) { input.focus(); return; }
+      if (editingId) {
+        const task = tasks.find(item => item.id === editingId);
+        if (task) task.title = title;
+        editingId = null;
+        $('.add-btn').textContent = '＋ Add task';
+        showToast('Task updated ✨');
+      } else {
+        tasks.unshift({
+          id: makeId(), title, completed: false,
+          priority: $('#prioritySelect').value,
+          category: $('#categorySelect').value,
+          createdAt: new Date().toISOString()
+        });
+        showToast('Task added. You’ve got this!');
+      }
+      input.value = '';
+      saveTasks(); render(); input.focus();
+    });
+
+    taskList.addEventListener('click', event => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+      const article = button.closest('.task');
+      const task = tasks.find(item => item.id === article?.dataset.id);
+      if (!task) return;
+      const action = button.dataset.action;
+      if (action === 'toggle') {
+        task.completed = !task.completed;
+        saveTasks(); render();
+        showToast(task.completed ? 'Nice work — task completed!' : 'Task moved back to in progress.');
+      } else if (action === 'delete') {
+        tasks = tasks.filter(item => item.id !== task.id);
+        if (editingId === task.id) resetEdit();
+        saveTasks(); render(); showToast('Task deleted.');
+      } else if (action === 'edit') {
+        editingId = task.id;
+        $('#taskInput').value = task.title;
+        $('.add-btn').textContent = 'Save changes';
+        $('#taskInput').focus();
+        $('#taskInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+
+    function resetEdit() {
+      editingId = null;
+      $('#taskInput').value = '';
+      $('.add-btn').textContent = '＋ Add task';
+    }
+    document.querySelectorAll('.filter').forEach(button => {
+      button.addEventListener('click', () => {
+        currentFilter = button.dataset.filter;
+        document.querySelectorAll('.filter').forEach(item => item.classList.toggle('active', item === button));
+        render();
+      });
+    });
+    $('#clearCompleted').addEventListener('click', () => {
+      const completedCount = tasks.filter(task => task.completed).length;
+      if (!completedCount) { showToast('No completed tasks to clear.'); return; }
+      tasks = tasks.filter(task => !task.completed);
+      if (editingId && !tasks.some(task => task.id === editingId)) resetEdit();
+      saveTasks(); render(); showToast(`${completedCount} completed ${completedCount === 1 ? 'task' : 'tasks'} cleared.`);
+    });
+    $('#todayLabel').textContent = new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+    $('#year').textContent = new Date().getFullYear();
+    render();
+  </script>
+</body>
+</html>
